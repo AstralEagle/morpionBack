@@ -56,7 +56,7 @@ exports.setDefaultAccess = (req, res, next) => {
 
 exports.verifyPlaces = (req, res, next) => {
   const SQL =
-    "SELECT COUNT(id) as nbrPlace, id_player as player FROM player_access WHERE id_plato = ?";
+    "SELECT COUNT(DISTINCT id_player) as nbrPlace, id_player as player FROM player_access WHERE id_plato = ?";
   db.each(SQL, req.params.id, (err, data) => {
     if (err) {
       console.error(err);
@@ -89,8 +89,7 @@ exports.setAccess = (req, res, next) => {
 };
 
 exports.getAllGames = (req, res, next) => {
-  const SQL =
-    "SELECT plato.id as id, plato.name as name, plato.plato as plato,COUNT(player_access.id) as nbrPlayer FROM plato JOIN player_access ON player_access.id_plato = plato.id WHERE end = 0 GROUP BY plato.id";
+  const SQL = "SELECT plato.id as id, plato.name as name, plato.plato as plato,COUNT(DISTINCT player_access.id_player) as nbrPlayer FROM plato JOIN player_access ON player_access.id_plato = plato.id WHERE end = 0 GROUP BY plato.id HAVING COUNT(DISTINCT player_access.id_player) < 2";
   db.all(SQL, (err, data) => {
     if (err) {
       console.error(err);
@@ -102,17 +101,36 @@ exports.getAllGames = (req, res, next) => {
       res.status(200).json(data);
     }
   });
-}; 
+};
+
+exports.getMyGames = (req, res, next) => {
+  const SQL = "SELECT plato.id as id, plato.name as name, plato.plato as plato,(SELECT COUNT(DISTINCT player_access.id_player) FROM player_access WHERE id_plato = plato.id) as nbrPlayer FROM plato JOIN player_access ON player_access.id_plato = plato.id WHERE end = 0 AND player_access.id_player = ? GROUP BY plato.id"
+  db.all(SQL, req.headers.authorization.split(" ")[2], (err, data) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send();
+    } else {
+      data.map(
+        (row) => (row.plato = row.plato.split(" ").map((el) => el.split("")))
+      );
+      res.status(200).json(data);
+    }
+  });
+}
+
+
+
 
 exports.getGame = (req, res, next) => {
   const sql =
-    "SELECT plato.plato AS plato, plato.id, plato.name, plato.turn, plato.end,player_access.id_player AS userId, player_access.team, users.name AS userName FROM plato LEFT JOIN player_access ON player_access.id_plato = plato.id JOIN users ON users.id = player_access.id_player WHERE plato.id = ?";
+    "SELECT DISTINCT plato.plato AS plato, plato.id, plato.name, plato.turn, plato.end,player_access.id_player AS userId, player_access.team, users.name AS userName FROM plato LEFT JOIN player_access ON player_access.id_plato = plato.id JOIN users ON users.id = player_access.id_player WHERE plato.id = ? ORDER BY team";
   db.all(sql, req.params.id, (err, data) => {
     if (err) {
       console.error(err);
       res.status(500).json({ error: err });
     } else if (data.length > 0) {
       let value = {
+        name : data[0].name,
         plato: data[0].plato.split(" ").map((el) => el.split("")),
         turn: data[0].turn,
         end: data[0].end,
@@ -132,7 +150,7 @@ exports.getGame = (req, res, next) => {
       }
       res.status(200).json(value);
     } else {
-      res.status(400).send();
+      res.status(400).json({ error: "Partie non existante"});
     }
   });
 };

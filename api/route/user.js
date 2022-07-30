@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const control = require("../controleur/user")
 
-router.
+router.get("/", control.getListPoints);
+router.get("/:id/", control.getUserInfo);
 
 
 

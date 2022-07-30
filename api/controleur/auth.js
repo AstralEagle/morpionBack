@@ -23,7 +23,7 @@ exports.signup = (req, res, next) => {
 exports.login = (req,res) => {
 
 
-    console.log("test");
+    console.log(req.body);
     const sql = "SELECT * FROM users WHERE email = ?"
     db.all( sql, req.body.email, (err,data) => {
         if(err){
@@ -36,7 +36,7 @@ exports.login = (req,res) => {
         else{
             const user = data[0]
             if(user.mdp == req.body.mdp){
-                if(user.save){
+                if(user.save === true){
                     res.status(200).json({
                         userID : user.id,
                         token : jwt.sign({userID : user.id},process.env.TOKENUSER),

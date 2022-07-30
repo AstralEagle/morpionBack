@@ -22,7 +22,6 @@ module.exports = (io) => {
           }
           plato[pos[0]][pos[1]] = caseValue[0];
           const win = winCondition(plato);
-          console.log("Win?", win);
           if (win == null) {
             const values = [
               plato.map((el) => el.join("")).join(" "),
@@ -97,7 +96,7 @@ const verifTurn = (req, res, next) => {
     } else {
       const turn = platoData.turn;
       const sql =
-        "SELECT team FROM player_access WHERE id_plato = ? AND id_player = ?";
+        "SELECT DISTINCT team FROM player_access WHERE id_plato = ? AND id_player = ?";
       const value = [req.params.id, req.headers.authorization.split(" ")[2]];
 
       db.each(sql, value, (err, data) => {
