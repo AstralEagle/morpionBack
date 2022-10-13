@@ -5,6 +5,7 @@ const db = require("../../database/data");
 
 module.exports = (io) => {
   route.post("/:id", verifTurn, (req, res) => {
+    console.log("Played")
     const SQL = "SELECT plato, turn from plato WHERE id = ?";
 
     db.each(SQL, req.params.id, (err, data) => {
@@ -15,10 +16,10 @@ module.exports = (io) => {
         let plato = data.plato.split(" ").map((el) => el.split(""));
         const pos = req.body.position.split("");
         if (plato[pos[0]][pos[1]] == ".") {
-          let caseValue = ["X", 1];
+          let caseValue = ["0", 1];
 
           if (data.turn == 1) {
-            caseValue = ["O", 0];
+            caseValue = ["1", 0];
           }
           plato[pos[0]][pos[1]] = caseValue[0];
           const win = winCondition(plato);
@@ -87,10 +88,12 @@ module.exports = (io) => {
 
 const verifTurn = (req, res, next) => {
   const SQL = "SELECT turn, end FROM plato WHERE id = ?";
+  //Recupère le tour pour savoir a qui de jouer et si la partie est fini
   db.each(SQL, req.params.id, (err, platoData) => {
     if (err) {
       console.log(err);
       res.status(500).send();
+      //Si la parti est fini on effectue une erreur
     } else if (platoData.end === 1) {
       res.status(400).json({ error: "La partie est fini!" });
     } else {
@@ -99,15 +102,17 @@ const verifTurn = (req, res, next) => {
         "SELECT DISTINCT team FROM player_access WHERE id_plato = ? AND id_player = ?";
       const value = [req.params.id, req.headers.authorization.split(" ")[2]];
 
+      //On Recupère le "tour" du joueur
       db.each(sql, value, (err, data) => {
         if (err) {
           console.log(err);
           res.status(500).send();
         } else {
+          //On verifi si le tour du joueur correspond a celui de la parti
           if (turn == data.team) {
             next();
           } else {
-            res.status(400).json({ error: "It's not your turn!" });
+            res.status(400).json({ error: "Ce n'est pas votre tour!" });
           }
         }
       });

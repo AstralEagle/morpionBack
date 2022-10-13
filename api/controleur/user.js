@@ -23,3 +23,17 @@ exports.getListPoints = (req, res, next) => {
         }
     })
 }
+exports.getInfoPlayer = (req, res, next) => {
+
+    const sql = ""
+}
+exports.getSign = (req, res, next) => {
+    const SQL = "SELECT sign FROM users WHERE id =?"
+    db.each(SQL, req.headers.authorization.split(" ")[2], (err, data) =>{
+        if(err){
+            console.error(err)
+            res.status(500).json({ error:err})
+        }
+        res.status(200).json({sign: data.sign})
+    })
+}

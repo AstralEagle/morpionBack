@@ -10,7 +10,7 @@ module.exports = (server) => {
         console.log('User Connected : '+ socket.id)
         
         socket.on('joinGame',(value,callBack) => {
-
+            
             socket.join(value.room)
             callBack(null)
         });

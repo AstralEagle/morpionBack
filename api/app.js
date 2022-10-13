@@ -1,10 +1,13 @@
 const express = require("express");
+const path = require("path");
 
 const returnApp = (app, io) => {
+  
   const routeAuth = require("./route/auth");
-  const routeGame = require("./route/game");
+  const routeGame = require("./route/game")(io);
   const routeUser = require("./route/user");
   const routePlay = require("./play/playedGame")(io);
+  const routeMarket = require('./route/market');
 
   let nbrRequest = 0;
 
@@ -31,6 +34,8 @@ const returnApp = (app, io) => {
   app.use("/api/game/", routeGame);
   app.use("/api/play/", routePlay);
   app.use("/api/user/", routeUser);
+  app.use("/api/market/", routeMarket);
+  app.use("/sign/",express.static(path.join(__dirname,'img/sign')));
 
   return app;
 };
